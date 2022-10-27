@@ -23,10 +23,10 @@
         "webpack-merge": "^5.8.0"
     },
     "scripts": {
-        "start": "npx webpack-dev-server --config webpack.config-dev.js",
+        "start": "npx webpack-dev-server --open --config webpack.config-dev.js",
         "build": "npx webpack --config webpack.config-prod.js",
         "lint": "npx eslint . --ext .ts,.tsx"
     },
-  "author": "Regis Kopper <kopper@uncg.edu>",
+    "author": "Regis Kopper <kopper@uncg.edu>",
     "license": "CC BY-NC-SA 4.0"
 }

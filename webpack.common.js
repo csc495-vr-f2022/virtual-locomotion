@@ -5,7 +5,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 // App directory
 const appDirectory = fs.realpathSync(process.cwd());
 
-
 module.exports = {
     entry: path.resolve(appDirectory, "src/index.ts"), //path to the main .ts file
     output: {
@@ -16,12 +15,9 @@ module.exports = {
     },
     module: {
         rules: [{
-            test: /\.(js|mjs|jsx|ts|tsx)$/,
-            exclude: /node_modules/,
-            include: path.resolve('src'),
-            loader: 'source-map-loader',
-
-            enforce: 'pre',
+                test: /\.(js|mjs|jsx|ts|tsx)$/,
+                loader: 'source-map-loader',
+                enforce: 'pre',
             },
             {
                 test: /\.tsx?$/,

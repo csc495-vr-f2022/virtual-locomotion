@@ -29,6 +29,13 @@ import { Quaternion } from "@babylonjs/core/Maths/math.vector";
 import "@babylonjs/core/Helpers/sceneHelpers";
 import "@babylonjs/inspector";
 
+enum LocomotionMode 
+{
+    viewDirected,
+    handDirected,
+    teleportation
+}
+
 class Game 
 { 
     private canvas: HTMLCanvasElement;
@@ -58,6 +65,12 @@ class Game
         this.xrCamera = null;
         this.leftController = null;
         this.rightController = null;
+
+        this.locomotionMode = LocomotionMode.viewDirected;
+        this.laserPointer = null;
+        this.groundMeshes = [];
+        this.teleportPoint = null;  
+
     }
 
     start() : void 
@@ -155,6 +168,7 @@ class Game
         blueMaterial.diffuseColor = new Color3(.284, .73, .831);
         blueMaterial.specularColor = Color3.Black();
         blueMaterial.emissiveColor = new Color3(.284, .73, .831);
+    }
 
     // The main update loop will be executed once per frame before the scene is rendered
     private update() : void
