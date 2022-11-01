@@ -28,6 +28,7 @@ import { Quaternion } from "@babylonjs/core/Maths/math.vector";
 // Side effects
 import "@babylonjs/core/Helpers/sceneHelpers";
 import "@babylonjs/inspector";
+import { PositionGizmo } from "@babylonjs/core";
 
 enum LocomotionMode 
 {
@@ -118,6 +119,8 @@ class Game
         // Make sure the skybox is not pickable!
         environment!.skybox!.isPickable = false;
 
+        this.groundMeshes.push(environment!.ground!);
+
         // Creates the XR experience helper
         const xrHelper = await this.scene.createDefaultXRExperienceAsync({});
 
@@ -168,6 +171,15 @@ class Game
         blueMaterial.diffuseColor = new Color3(.284, .73, .831);
         blueMaterial.specularColor = Color3.Black();
         blueMaterial.emissiveColor = new Color3(.284, .73, .831);
+
+        var column = MeshBuilder.CreateBox("column", {width: 2, depth: 2, height: 5}, this.scene);
+        column.position = new Vector3(0, 2.5, 10);
+        column.material = blueMaterial;
+
+        for(let i = 0; i < 30; i++){
+            let columnInstance = column.createInstance("column");
+            column.position = new Vector3(Math.random() * 25 - 12.5, 2.5, Math.random() * 25 - 12.5);
+        }
     }
 
     // The main update loop will be executed once per frame before the scene is rendered
@@ -180,12 +192,54 @@ class Game
     // Process event handlers for controller input
     private processControllerInput()
     {
+        this.onRightA(this.rightController?.motionController?.getComponent("a-button"));
+        this.onRightThumbstick(this.rightController?.motionController?.getComponent("xr-standard-thumbstick"));
     }
 
+    private onRightA(component?: WebXRControllerComponent)
+    {
+        if(component?.changes.pressed?.current)
+        {
+            this.locomotionMode += 1;
+            this.locomotionMode %= 3;
+            
+        }
+    }
+    
     private onRightThumbstick(component?: WebXRControllerComponent)
     {
         if(component?.changes.axes)
         {
+            if(this.locomotionMode == LocomotionMode.viewDirected)
+            {
+                var directionVector = this.xrCamera!.getDirection(new Vector3(0,0,1));
+
+                var moveDistance = -component.axes.y * (this.engine.getDeltaTime() / 1000) * 3;
+
+                var turnAngle = component.axes.x * (this.engine.getDeltaTime() / 1000) * 60;
+
+                // smooth turning
+                var cameraRotation = Quaternion.FromEulerAngles(0, turnAngle * Math.PI / 180,0);
+                this.xrCamera!.rotationQuaternion.multiplyInPlace(cameraRotation);
+
+                this.xrCamera!.position.addInPlace(directionVector.scale(moveDistance));
+            }
+            else if(this.locomotionMode = LocomotionMode.handDirected){
+                var directionVector = this.rightController!.pointer.forward;
+
+                var moveDistance = -component.axes.y * (this.engine.getDeltaTime() / 1000) * 3;
+
+                this.xrCamera!.position.addInPlace(directionVector.scale(moveDistance));
+
+                var turnAngle = component.axes.x * (this.engine.getDeltaTime() / 1000) * 60;
+
+                // smooth turning
+                var cameraRotation = Quaternion.FromEulerAngles(0, turnAngle * Math.PI / 180,0);
+                this.xrCamera!.rotationQuaternion.multiplyInPlace(cameraRotation);
+
+            }else{
+                
+            }
 
         }
     }
