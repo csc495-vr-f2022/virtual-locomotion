@@ -28,7 +28,7 @@ import { Quaternion } from "@babylonjs/core/Maths/math.vector";
 // Side effects
 import "@babylonjs/core/Helpers/sceneHelpers";
 import "@babylonjs/inspector";
-import { PositionGizmo } from "@babylonjs/core";
+import { PickingInfo, PositionGizmo } from "@babylonjs/core";
 
 enum LocomotionMode 
 {
@@ -210,9 +210,15 @@ class Game
     {
         if(component?.changes.axes)
         {
-            if(this.locomotionMode == LocomotionMode.viewDirected)
+            if(this.locomotionMode == LocomotionMode.viewDirected ||
+               this.locomotionMode == LocomotionMode.handDirected)
             {
-                var directionVector = this.xrCamera!.getDirection(new Vector3(0,0,1));
+                // set direction as the camera view direction, or the controller
+                // forward vector, depending on the locomotionMode
+                var directionVector = 
+                    (this.locomotionMode == LocomotionMode.viewDirected ? 
+                        this.xrCamera!.getDirection(Axis.Z) :
+                        this.rightController!.pointer.forward);
 
                 var moveDistance = -component.axes.y * (this.engine.getDeltaTime() / 1000) * 3;
 
@@ -223,27 +229,42 @@ class Game
                 this.xrCamera!.rotationQuaternion.multiplyInPlace(cameraRotation);
 
                 this.xrCamera!.position.addInPlace(directionVector.scale(moveDistance));
-            }
-            else if(this.locomotionMode = LocomotionMode.handDirected){
-                var directionVector = this.rightController!.pointer.forward;
-
-                var moveDistance = -component.axes.y * (this.engine.getDeltaTime() / 1000) * 3;
-
-                this.xrCamera!.position.addInPlace(directionVector.scale(moveDistance));
-
-                var turnAngle = component.axes.x * (this.engine.getDeltaTime() / 1000) * 60;
-
-                // smooth turning
-                var cameraRotation = Quaternion.FromEulerAngles(0, turnAngle * Math.PI / 180,0);
-                this.xrCamera!.rotationQuaternion.multiplyInPlace(cameraRotation);
-
             }else{
-                
-            }
+                // teleport mode
+                if (component.axes.y < -.75)
+                {
+                    // create a new ray cast
+                    var ray = new Ray(this.rightController!.pointer.position, this.rightController!.pointer.forward);
+                    var pickInfo = this.scene.pickWithRay(ray);
 
+                    // if the ray instersected a ground mesh
+                    if(pickInfo?.hit && this.groundMeshes.includes(pickInfo.pickedMesh!)){
+                        this.teleportPoint = pickInfo.pickedPoint;
+                        this.laserPointer!.scaling.z = pickInfo.distance;
+                        this.laserPointer!.visibility = 1;
+                    }else{
+                        this.teleportPoint = null;
+                        this.laserPointer!.visibility = 0;
+                    }
+                } else if(component.axes.y == 0){
+                    // thumbstick returned to the rest position
+                    this.laserPointer!.visibility = 0;
+
+                    //if we have a valid teleport target, then teleport the user
+                    if (this.teleportPoint){
+                        this.xrCamera!.position.x = this.teleportPoint.x;
+                        // we don't want the user to be at the ground level
+                        // so we don't update the y axis
+                        //this.xrCamera!.position.y = this.teleportPoint.y;
+
+                        this.xrCamera!.position.z = this.teleportPoint.z;
+
+                        this.teleportPoint = null;
+                    }
+                }
+            }
         }
     }
-
 }
 /******* End of the Game class ******/   
 
