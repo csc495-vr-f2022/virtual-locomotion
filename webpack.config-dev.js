@@ -20,7 +20,7 @@ module.exports = merge(common, {
         static: path.resolve(appDirectory), //tells webpack to serve from the app directory
         compress: true,
         hot: true,
-        host,
+//        host,
         
         open: true,
         devMiddleware: {
