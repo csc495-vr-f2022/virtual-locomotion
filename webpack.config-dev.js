@@ -2,6 +2,7 @@ const { merge } = require('webpack-merge');
 const path = require('path');
 const fs = require('fs');
 const common = require('./webpack.common.js');
+const { exit } = require('process');
 
 // App directory
 const appDirectory = fs.realpathSync(process.cwd());
@@ -20,7 +21,7 @@ module.exports = merge(common, {
         static: path.resolve(appDirectory), //tells webpack to serve from the app directory
         compress: true,
         hot: true,
-//        host,
+        host: 'local-ip',
         
         open: true,
         devMiddleware: {
@@ -28,7 +29,7 @@ module.exports = merge(common, {
         },
 
         //enable the use of WebXR
-        https: true
+        server: 'https'
     }
 });
 
